@@ -1,20 +1,30 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, Typography, Divider } from 'antd';
 import { aiService } from '../services/api';
+import type { BuildAssessmentResponse, ApiResponse } from '../services/api';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
-const AssessmentSystem: React.FC = () => {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [assessmentResult, setAssessmentResult] = useState<any>(null);
+interface FormValues {
+  courseFrameworkId: string;
+  objectives: string;
+  targetAudience: string;
+}
 
-  const handleSubmit = async (values: any) => {
+const AssessmentSystem: React.FC = () => {
+  const [form] = Form.useForm<FormValues>();
+  const [loading, setLoading] = useState(false);
+  const [assessmentResult, setAssessmentResult] = useState<ApiResponse<BuildAssessmentResponse> | null>(null);
+
+  const handleSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      const result = await aiService.buildAssessment(values);
-      setAssessmentResult(result.data);
+      const result = await aiService.buildAssessment({
+        ...values,
+        objectives: values.objectives.split('\n').filter(Boolean)
+      });
+      setAssessmentResult(result);
     } catch (error) {
       console.error('Failed to build assessment:', error);
     } finally {
@@ -36,19 +46,19 @@ const AssessmentSystem: React.FC = () => {
             onFinish={handleSubmit}
           >
             <Form.Item
-              name="courseTitle"
-              label="课程标题"
-              rules={[{ required: true, message: '请输入课程标题' }]}
+              name="courseFrameworkId"
+              label="课程框架ID"
+              rules={[{ required: true, message: '请输入课程框架ID' }]}
             >
-              <Input placeholder="例如：北京历史文化研学之旅" />
+              <Input placeholder="请输入课程框架ID" />
             </Form.Item>
             
             <Form.Item
-              name="courseObjectives"
+              name="objectives"
               label="课程目标"
               rules={[{ required: true, message: '请输入课程目标' }]}
             >
-              <TextArea rows={4} placeholder="请输入或粘贴课程目标内容" />
+              <TextArea rows={4} placeholder="请输入或粘贴课程目标内容（每行一个目标）" />
             </Form.Item>
             
             <Form.Item
@@ -80,7 +90,7 @@ const AssessmentSystem: React.FC = () => {
             <div>
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>评估维度：</Text>
-                {assessmentResult.assessmentDimensions.map((dimension: any, index: number) => (
+                {(assessmentResult.data.assessmentDimensions || []).map((dimension: BuildAssessmentResponse['assessmentDimensions'][0], index: number) => (
                   <div key={index} style={{ margin: '12px 0', padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
                     <h4>{dimension.name}</h4>
                     <p><strong>描述：</strong>{dimension.description}</p>
@@ -91,7 +101,7 @@ const AssessmentSystem: React.FC = () => {
               
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>评估方法：</Text>
-                {assessmentResult.assessmentMethods.map((method: any, index: number) => (
+                {(assessmentResult.data.assessmentMethods || []).map((method: BuildAssessmentResponse['assessmentMethods'][0], index: number) => (
                   <div key={index} style={{ margin: '12px 0', padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
                     <h4>{method.name}</h4>
                     <p><strong>适用维度：</strong>{method.applicableDimensions}</p>
@@ -102,7 +112,7 @@ const AssessmentSystem: React.FC = () => {
               
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>评估标准：</Text>
-                {assessmentResult.evaluationCriteria.map((criterion: any, index: number) => (
+                {(assessmentResult.data.evaluationCriteria || []).map((criterion: BuildAssessmentResponse['evaluationCriteria'][0], index: number) => (
                   <div key={index} style={{ margin: '8px 0', padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
                     <p><strong>等级：</strong>{criterion.level}</p>
                     <p><strong>描述：</strong>{criterion.description}</p>
@@ -114,7 +124,7 @@ const AssessmentSystem: React.FC = () => {
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>数据收集方法：</Text>
                 <ul>
-                  {assessmentResult.dataCollectionMethods.map((method: string, index: number) => (
+                  {(assessmentResult.data.dataCollectionMethods || []).map((method: string, index: number) => (
                     <li key={index}>{method}</li>
                   ))}
                 </ul>
@@ -123,7 +133,7 @@ const AssessmentSystem: React.FC = () => {
               <div>
                 <Text strong>评估报告结构：</Text>
                 <ul>
-                  {assessmentResult.reportingStructure.map((section: string, index: number) => (
+                  {(assessmentResult.data.reportingStructure || []).map((section: string, index: number) => (
                     <li key={index}>{section}</li>
                   ))}
                 </ul>

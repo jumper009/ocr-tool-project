@@ -1,20 +1,27 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, Typography, Divider } from 'antd';
 import { aiService } from '../services/api';
+import type { RecommendContentData, RecommendContentResponse, ApiResponse } from '../services/api';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 const ContentRecommendation: React.FC = () => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<Omit<RecommendContentData, 'topics'> & { topics: string }>();
   const [loading, setLoading] = useState(false);
-  const [recommendationResult, setRecommendationResult] = useState<any>(null);
+  const [recommendationResult, setRecommendationResult] = useState<ApiResponse<RecommendContentResponse> | null>(null);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Omit<RecommendContentData, 'topics'> & { topics: string }) => {
     setLoading(true);
     try {
-      const result = await aiService.recommendContent(values);
-      setRecommendationResult(result.data);
+      // 将主题字符串转换为数组
+      const requestData: RecommendContentData = {
+        ...values,
+        topics: values.topics.split(',').map(topic => topic.trim())
+      };
+      
+      const result = await aiService.recommendContent(requestData);
+      setRecommendationResult(result);
     } catch (error) {
       console.error('Failed to recommend content:', error);
     } finally {
@@ -36,19 +43,19 @@ const ContentRecommendation: React.FC = () => {
             onFinish={handleSubmit}
           >
             <Form.Item
-              name="courseTitle"
-              label="课程标题"
-              rules={[{ required: true, message: '请输入课程标题' }]}
+              name="courseFrameworkId"
+              label="课程框架ID"
+              rules={[{ required: true, message: '请输入课程框架ID' }]}
             >
-              <Input placeholder="例如：北京历史文化研学之旅" />
+              <Input placeholder="例如：cf-123456" />
             </Form.Item>
             
             <Form.Item
-              name="courseFramework"
-              label="课程框架"
-              rules={[{ required: true, message: '请输入课程框架' }]}
+              name="topics"
+              label="主题列表"
+              rules={[{ required: true, message: '请输入主题列表' }]}
             >
-              <TextArea rows={6} placeholder="请输入或粘贴课程框架内容" />
+              <TextArea rows={6} placeholder="请输入主题，用逗号分隔" />
             </Form.Item>
             
             <Form.Item
@@ -57,13 +64,6 @@ const ContentRecommendation: React.FC = () => {
               rules={[{ required: true, message: '请输入目标人群' }]}
             >
               <Input placeholder="例如：初中生" />
-            </Form.Item>
-            
-            <Form.Item
-              name="courseId"
-              label="课程ID（可选）"
-            >
-              <Input placeholder="已创建课程的ID" />
             </Form.Item>
             
             <Form.Item>
@@ -80,7 +80,7 @@ const ContentRecommendation: React.FC = () => {
             <div>
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>教学内容推荐：</Text>
-                {recommendationResult.contentRecommendations.map((content: any, index: number) => (
+                {(recommendationResult.data.contentRecommendations || []).map((content: RecommendContentResponse['contentRecommendations'][0], index: number) => (
                   <div key={index} style={{ margin: '12px 0', padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
                     <h4>{content.title}</h4>
                     <p><strong>类型：</strong>{content.type}</p>
@@ -92,7 +92,7 @@ const ContentRecommendation: React.FC = () => {
               
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>资源推荐：</Text>
-                {recommendationResult.resourceRecommendations.map((resource: any, index: number) => (
+                {(recommendationResult.data.resourceRecommendations || []).map((resource: RecommendContentResponse['resourceRecommendations'][0], index: number) => (
                   <div key={index} style={{ margin: '12px 0', padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
                     <h4>{resource.title}</h4>
                     <p><strong>类型：</strong>{resource.type}</p>
@@ -105,7 +105,7 @@ const ContentRecommendation: React.FC = () => {
               <div>
                 <Text strong>互动活动建议：</Text>
                 <ul>
-                  {recommendationResult.interactiveActivities.map((activity: string, index: number) => (
+                  {(recommendationResult.data.interactiveActivities || []).map((activity: string, index: number) => (
                     <li key={index}>{activity}</li>
                   ))}
                 </ul>

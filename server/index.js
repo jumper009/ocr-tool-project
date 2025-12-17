@@ -6,6 +6,16 @@ const connectDB = require('./config/db');
 // 加载环境变量
 dotenv.config();
 
+// 验证环境变量加载
+console.log('=== Environment Variables Loaded ===');
+console.log('PORT:', process.env.PORT);
+console.log('MONGO_URI:', process.env.MONGO_URI);
+console.log('TEST_EMAIL:', process.env.TEST_EMAIL);
+console.log('TEST_PASSWORD:', process.env.TEST_PASSWORD);
+console.log('TEST_USERNAME:', process.env.TEST_USERNAME);
+console.log('TEST_ROLE:', process.env.TEST_ROLE);
+console.log('====================================');
+
 const app = express();
 
 // 中间件

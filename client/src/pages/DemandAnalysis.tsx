@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, Typography, Divider } from 'antd';
 import { aiService } from '../services/api';
+import type { AnalyzeDemandData, AnalyzeDemandResponse, ApiResponse } from '../services/api';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 const DemandAnalysis: React.FC = () => {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [form] = Form.useForm<AnalyzeDemandData>();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [analysisResult, setAnalysisResult] = useState<ApiResponse<AnalyzeDemandResponse> | null>(null);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: AnalyzeDemandData) => {
     setLoading(true);
     try {
       const result = await aiService.analyzeDemand(values);
-      setAnalysisResult(result.data);
+      setAnalysisResult(result);
     } catch (error) {
       console.error('Failed to analyze demand:', error);
     } finally {
@@ -88,18 +89,18 @@ const DemandAnalysis: React.FC = () => {
             <div>
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>需求摘要：</Text>
-                <p>{analysisResult.demandSummary}</p>
+                <p>{analysisResult.data.demandSummary || '-'}</p>
               </div>
               
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>目标人群分析：</Text>
-                <p>{analysisResult.targetAudienceAnalysis}</p>
+                <p>{analysisResult.data.targetAudienceAnalysis || '-'}</p>
               </div>
               
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>核心目标：</Text>
                 <ul>
-                  {analysisResult.coreObjectives.map((obj: string, index: number) => (
+                  {(analysisResult.data.coreObjectives || []).map((obj, index) => (
                     <li key={index}>{obj}</li>
                   ))}
                 </ul>
@@ -108,7 +109,7 @@ const DemandAnalysis: React.FC = () => {
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>关键主题：</Text>
                 <ul>
-                  {analysisResult.keyTopics.map((topic: string, index: number) => (
+                  {(analysisResult.data.keyTopics || []).map((topic, index) => (
                     <li key={index}>{topic}</li>
                   ))}
                 </ul>
@@ -117,7 +118,7 @@ const DemandAnalysis: React.FC = () => {
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>建议教学方法：</Text>
                 <ul>
-                  {analysisResult.teachingMethods.map((method: string, index: number) => (
+                  {(analysisResult.data.teachingMethods || []).map((method, index) => (
                     <li key={index}>{method}</li>
                   ))}
                 </ul>
@@ -126,7 +127,7 @@ const DemandAnalysis: React.FC = () => {
               <div>
                 <Text strong>所需资源：</Text>
                 <ul>
-                  {analysisResult.resourcesRequired.map((resource: string, index: number) => (
+                  {(analysisResult.data.resourcesRequired || []).map((resource, index) => (
                     <li key={index}>{resource}</li>
                   ))}
                 </ul>

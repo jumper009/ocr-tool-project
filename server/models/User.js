@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
   username: {
@@ -35,10 +36,21 @@ const UserSchema = new mongoose.Schema({
   },
 });
 
-// 每次更新前更新updatedAt字段
-UserSchema.pre('save', function (next) {
+// 每次保存前更新 updatedAt，并对密码进行加密（仅当密码被修改时）
+UserSchema.pre('save', async function (next) {
   this.updatedAt = Date.now();
-  next();
+
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = mongoose.model('User', UserSchema);

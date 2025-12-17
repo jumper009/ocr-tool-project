@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, Typography, Divider } from 'antd';
 import { aiService } from '../services/api';
+import type { OptimizeItineraryData, OptimizeItineraryResponse, ApiResponse } from '../services/api';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -8,13 +9,13 @@ const { TextArea } = Input;
 const ItineraryOptimization: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [itineraryResult, setItineraryResult] = useState<any>(null);
+  const [itineraryResult, setItineraryResult] = useState<ApiResponse<OptimizeItineraryResponse> | null>(null);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: OptimizeItineraryData) => {
     setLoading(true);
     try {
       const result = await aiService.optimizeItinerary(values);
-      setItineraryResult(result.data);
+      setItineraryResult(result);
     } catch (error) {
       console.error('Failed to optimize itinerary:', error);
     } finally {
@@ -88,7 +89,7 @@ const ItineraryOptimization: React.FC = () => {
             <div>
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>每日行程：</Text>
-                {itineraryResult.dailyItineraries.map((day: any, index: number) => (
+                {(itineraryResult.data.dailyItineraries || []).map((day: OptimizeItineraryResponse['dailyItineraries'][0], index: number) => (
                   <div key={index} style={{ margin: '12px 0', padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
                     <h4>第{index + 1}天</h4>
                     <p><strong>日期：</strong>{day.date}</p>
@@ -103,15 +104,15 @@ const ItineraryOptimization: React.FC = () => {
               
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>后勤安排：</Text>
-                <p><strong>交通：</strong>{itineraryResult.logistics.transportation}</p>
-                <p><strong>住宿：</strong>{itineraryResult.logistics.accommodation}</p>
-                <p><strong>餐饮：</strong>{itineraryResult.logistics.catering}</p>
-                <p><strong>安全措施：</strong>{itineraryResult.logistics.safetyMeasures}</p>
+                <p><strong>交通：</strong>{itineraryResult.data.logistics?.transportation || '-'}</p>
+                <p><strong>住宿：</strong>{itineraryResult.data.logistics?.accommodation || '-'}</p>
+                <p><strong>餐饮：</strong>{itineraryResult.data.logistics?.catering || '-'}</p>
+                <p><strong>安全措施：</strong>{itineraryResult.data.logistics?.safetyMeasures || '-'}</p>
               </div>
               
               <div>
                 <Text strong>应急预案：</Text>
-                <p>{itineraryResult.contingencyPlan}</p>
+                <p>{itineraryResult.data.contingencyPlan || '-'}</p>
               </div>
             </div>
           )}

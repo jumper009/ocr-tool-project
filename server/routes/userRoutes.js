@@ -5,9 +5,16 @@ const {
   createUser, 
   getUserById, 
   updateUser, 
-  deleteUser 
+  deleteUser,
+  register,
+  login
 } = require('../controllers/userController');
 
+// 认证路由
+router.post('/register', register);
+router.post('/login', login);
+
+// CRUD路由
 router.route('/')
   .get(getUsers)
   .post(createUser);

@@ -38,7 +38,8 @@ const CourseSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    // 当前接口未做用户体系集成，这里不强制要求
+    required: false,
   },
   createdAt: {
     type: Date,

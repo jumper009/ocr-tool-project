@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, Typography, Divider } from 'antd';
 import { aiService } from '../services/api';
+import type { GenerateFrameworkData, GenerateFrameworkResponse, ApiResponse } from '../services/api';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -8,13 +9,13 @@ const { TextArea } = Input;
 const CourseFramework: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [frameworkResult, setFrameworkResult] = useState<any>(null);
+  const [frameworkResult, setFrameworkResult] = useState<ApiResponse<GenerateFrameworkResponse> | null>(null);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: GenerateFrameworkData) => {
     setLoading(true);
     try {
       const result = await aiService.generateFramework(values);
-      setFrameworkResult(result.data);
+      setFrameworkResult(result);
     } catch (error) {
       console.error('Failed to generate framework:', error);
     } finally {
@@ -73,7 +74,7 @@ const CourseFramework: React.FC = () => {
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>课程目标：</Text>
                 <ul>
-                  {frameworkResult.courseObjectives.map((obj: string, index: number) => (
+                  {(frameworkResult.data.courseObjectives || []).map((obj: string, index: number) => (
                     <li key={index}>{obj}</li>
                   ))}
                 </ul>
@@ -81,7 +82,7 @@ const CourseFramework: React.FC = () => {
               
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>课程结构：</Text>
-                {frameworkResult.courseStructure.map((module: any, index: number) => (
+                {(frameworkResult.data.courseStructure || []).map((module: GenerateFrameworkResponse['courseStructure'][0], index: number) => (
                   <div key={index} style={{ margin: '12px 0', padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
                     <h4>{module.name}</h4>
                     <p><strong>目标：</strong>{module.target}</p>
@@ -95,7 +96,7 @@ const CourseFramework: React.FC = () => {
               <div style={{ marginBottom: '16px' }}>
                 <Text strong>教学策略：</Text>
                 <ul>
-                  {frameworkResult.teachingStrategies.map((strategy: string, index: number) => (
+                  {(frameworkResult.data.teachingStrategies || []).map((strategy: string, index: number) => (
                     <li key={index}>{strategy}</li>
                   ))}
                 </ul>
@@ -104,7 +105,7 @@ const CourseFramework: React.FC = () => {
               <div>
                 <Text strong>评估方法：</Text>
                 <ul>
-                  {frameworkResult.assessmentMethods.map((method: string, index: number) => (
+                  {(frameworkResult.data.assessmentMethods || []).map((method: string, index: number) => (
                     <li key={index}>{method}</li>
                   ))}
                 </ul>

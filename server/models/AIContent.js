@@ -17,7 +17,8 @@ const AIContentSchema = new mongoose.Schema({
   courseId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course',
-    required: true,
+    // 课程ID在前端是可选字段，因此这里不强制要求
+    required: false,
   },
   createdAt: {
     type: Date,
